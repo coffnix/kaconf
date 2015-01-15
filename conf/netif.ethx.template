@@ -1,0 +1,4 @@
+template="interface"
+ipaddrs="{IPADDRS_TEMPLATE}"
+gateway="{GATEWAY_TEMPLATE}"
+nameservers="{NAMESERVER_TEMPLATE}"

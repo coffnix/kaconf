@@ -1,0 +1,215 @@
+#!/bin/bash
+
+ROOTDIR="/opt/kaconf"
+TMPDIR="${ROOTDIR}/tmp"
+LOGDIR="${ROOTDIR}/log"
+#SENHA_DB="xptyz"
+#MYSQL="/usr/bin/mysql -p${SENHA_DB}"
+
+# variaveis template net
+#IPADDRS_TEMPLATE
+#GATEWAY_TEMPLATE
+#NAMESERVER_TEMPLATE
+
+#########################################
+# limpando arquivos de configuração
+#rm -f ${TMPDIR}/selectNET
+
+dialog --backtitle " KAconf " --title " KAconf " --msgbox "\n\nSeja bem vindo ao assistente de configuração KAconf.\n\nPara configurar corretamente seu equipamento, basta responder as próximas perguntas...\n" 12 70
+
+# criando lista de interfaces disponiveis
+ifconfig -a|cut -d" " -f1|sort|grep -v lo|sed '/^[\ ]\+\?$/d'|egrep -v "ip6tn|ip6gre|tun" > ${TMPDIR}/SeTinterfaces
+ARQUIVO="${TMPDIR}/SeTinterfaces"
+
+dialog --backtitle " KAconf " --title " SELECIONE UM DISPOSITIVO DE REDE "  --menu 'Selecione o dispositivo a ser configurado como rede interna (LAN):' 15 45 10 $(cut -d: -f1 ${ARQUIVO} | sed s,$," # ",) 2> ${TMPDIR}/selectNET
+if [ ! $? = 0 ]; then
+	#rm ${TMPDIR}/selectNET
+	exit
+else
+sed -i /$( cat ${TMPDIR}/selectNET )/d ${TMPDIR}/SeTinterfaces
+fi
+
+DEVICE=$( cat ${TMPDIR}/selectNET )
+
+#########################################
+
+defineIP() {
+
+lerIP_LOCAL=$( dialog --backtitle " KAconf " --stdout --title ' KAconf ' --inputbox " \nDigite o IP local do dispositivo (com mascara de rede)\n\nEx.:  192.168.0.50/20\n\n\n\n" 11 60 )
+if [ ! $? = 0 ]; then
+        #rm ${TMPDIR}/selectIP_LOCAL
+        exit
+else
+        echo "${lerIP_LOCAL}" > ${TMPDIR}/selectIP_LOCAL
+fi
+}
+
+defineIP
+
+        if [ -z "${lerIP_LOCAL}" ]; then
+                dialog --title " Erro ao configurar IP local " --msgbox "\nDigite um IP válido.\n" 9 60
+		defineIP
+		if [ -z "${lerIP_LOCAL}" ]; then
+			echo -e "\nVocê precisa digitar um IP válido. Por favor execute o kaconf novamente.\n\n" ; exit
+		fi
+        fi
+
+#####################################################
+defineGATEWAY() {
+
+lerGATEWAY_LOCAL=$( dialog --backtitle " KAconf " --stdout --title ' KAconf ' --inputbox " \nDigite o GATEWAY local do dispositivo\n\nEx.:  192.168.0.1\n\n\n\n" 11 60 )
+if [ ! $? = 0 ]; then
+        #rm ${TMPDIR}/selectGATEWAY_LOCAL
+        exit
+else
+        echo "${lerGATEWAY_LOCAL}" > ${TMPDIR}/selectGATEWAY_LOCAL
+fi
+}
+
+defineGATEWAY
+
+        if [ -z "${lerGATEWAY_LOCAL}" ]; then
+                dialog --title " Erro ao configurar GATEWAY local " --msgbox "\nDigite um GATEWAY válido.\n" 9 60
+                defineGATEWAY
+                if [ -z "${lerGATEWAY_LOCAL}" ]; then
+                        echo -e "\nVocê precisa digitar um GATEWAY válido. Por favor execute o kaconf novamente.\n\n" ; exit
+                fi
+        fi
+#####################################################
+defineDNS_LOCAL() {
+lerDNS_LOCAL=$( dialog --backtitle " KAconf " --stdout --title ' KAconf ' --inputbox " \nDigite o(s) servidor(es) DNS do dispositivo\n\nEx.:  8.8.8.8 192.168.0.1\n\n\n\n" 11 60 )
+if [ ! $? = 0 ]; then
+        #rm ${TMPDIR}/selectDNS_LOCAL
+        exit
+else
+        echo "${lerDNS_LOCAL}" > ${TMPDIR}/selectDNS_LOCAL
+fi
+}
+
+defineDNS_LOCAL
+
+        if [ -z "${lerDNS_LOCAL}" ]; then
+                dialog --title " Erro ao configurar hostname local " --msgbox "\nDigite pelo menos um servidor DNS válido.\n" 9 60
+                defineDNS_LOCAL
+                if [ -z "${lerDNS_LOCAL}" ]; then
+                        echo -e "\nVocê precisa digitar pelo menos um servidor DNS válido. Por favor execute o kaconf novamente.\n\n" ; exit
+                fi
+        fi
+#####################################################
+
+defineHOSTNAME_LOCAL() {
+lerHOSTNAME_LOCAL=$( dialog --backtitle " KAconf " --stdout --title ' KAconf ' --inputbox " \nDigite o hostname local do dispositivo\n\nEx.:  rasp-002\n\n\n\n" 11 60 )
+if [ ! $? = 0 ]; then
+        #rm ${TMPDIR}/selectHOSTNAME_LOCAL
+        exit
+else
+        echo "${lerHOSTNAME_LOCAL}" > ${TMPDIR}/selectHOSTNAME_LOCAL
+fi
+}
+
+defineHOSTNAME_LOCAL
+
+        if [ -z "${lerHOSTNAME_LOCAL}" ]; then
+                dialog --title " Erro ao configurar hostname local " --msgbox "\nDigite um hostname válido.\n" 9 60
+		defineHOSTNAME_LOCAL
+                if [ -z "${lerHOSTNAME_LOCAL}" ]; then
+                        echo -e "\nVocê precisa digitar um HOSTNAME válido. Por favor execute o kaconf novamente.\n\n" ; exit
+                fi
+        fi
+
+############################################################################################################################################################################################
+# Define conf do lxdm.conf
+
+defineIP_TS() {
+lerNOVO_IP_TS=$( dialog --backtitle " KAconf " --stdout --title ' KAconf ' --inputbox " \nDigite o IP do servidor TS\n\nEx.:  192.168.0.10\n\n\n\n" 11 60 )
+if [ ! $? = 0 ]; then
+        #rm ${TMPDIR}/selectNOVO_IP_TS
+        exit
+else
+        echo "${lerNOVO_IP_TS}" > ${TMPDIR}/selectNOVO_IP_TS
+fi
+}
+
+defineIP_TS
+
+        if [ -z "${lerNOVO_IP_TS}" ]; then
+                dialog --title " Erro ao configurar IP local " --msgbox "\nDigite um IP válido.\n" 9 60
+		defineIP_TS
+                if [ -z "${lerNOVO_IP_TS}" ]; then
+                        echo -e "\nVocê precisa digitar um IP do servidor TS válido. Por favor execute o kaconf novamente.\n\n" ; exit
+                fi
+        fi
+
+#####################################################
+
+lerNOVO_USUARIO_TS=$( dialog --backtitle " KAconf " --stdout --title ' KAconf ' --inputbox " \nDigite o usuário para conexão ao TS\n\nEx.:  user01\n\n\n\n" 11 60 )
+if [ ! $? = 0 ]; then
+        #rm ${TMPDIR}/selectNOVO_USUARIO_TS
+        exit
+fi
+
+
+        if [ -z "${lerNOVO_USUARIO_TS}" ]; then
+                dialog --title " Erro ao configurar usuário " --msgbox "\nDigite um usuário válido.\n" 9 60
+        else
+                echo "${lerNOVO_USUARIO_TS}" > ${TMPDIR}/selectNOVO_USUARIO_TS
+        fi
+
+#####################################################
+
+lerNOVA_SENHA_TS=$( dialog --backtitle " KAconf " --stdout --title ' KAconf ' --inputbox " \nDigite a senha do usuário para conexão ao TS\n\nEx.:  xptyz@123\n\n\n\n" 11 60 )
+if [ ! $? = 0 ]; then
+        #rm ${TMPDIR}/selectNOVA_SENHA_TS
+        exit
+fi
+
+
+        if [ -z "${lerNOVA_SENHA_TS}" ]; then
+                dialog --title " Erro ao configurar senha do usuário TS " --msgbox "\nDigite uma senha válida.\n" 9 60
+        else
+                echo "${lerNOVA_SENHA_TS}" > ${TMPDIR}/selectNOVA_SENHA_TS
+        fi
+
+############################################################################################################################################################################################
+# Confirmação das opções
+dialog --backtitle " KAconf " --title " KAconf " --yesno "\nInterface de rede interna (LAN):  ${DEVICE}\n\nIP local configurado: ${lerIP_LOCAL}\n\nGateway default configurado: $(cat ${TMPDIR}/selectGATEWAY_LOCAL)\n\nServidor(es) DNS: $(cat ${TMPDIR}/selectDNS_LOCAL)\n\nHostname local configurado:  $(cat ${TMPDIR}/selectHOSTNAME_LOCAL)\n\nIP do servidor TS: ${lerNOVO_IP_TS}\n\nUsuário TS: ${lerNOVO_USUARIO_TS}\n\nSenha do usuário TS: ${lerNOVA_SENHA_TS}\n\n\nConfirma?" 24 70
+                        if [ ! $? = 0 ]; then
+                                exit
+                        fi
+
+# Atualização de arquivos de conf:
+# LOCAL
+cp /opt/kaconf/conf/netif.ethx.template ${TMPDIR}/netif.${DEVICE}
+sed -i s,"{IPADDRS_TEMPLATE}","$(cat ${TMPDIR}/selectIP_LOCAL)",g ${TMPDIR}/netif.${DEVICE}
+sed -i s,"{GATEWAY_TEMPLATE}","$(cat ${TMPDIR}/selectGATEWAY_LOCAL)",g ${TMPDIR}/netif.${DEVICE}
+sed -i s,"{NAMESERVER_TEMPLATE}","$(cat ${TMPDIR}/selectDNS_LOCAL)",g ${TMPDIR}/netif.${DEVICE}
+
+cp ${TMPDIR}/netif.${DEVICE} /etc/conf.d/
+rm /etc/init.d/netif.${DEVICE} ; cd /etc/init.d/ ; ln -s netif.tmpl netif.${DEVICE} ; rc-update add netif.${DEVICE} default
+
+#####################################################
+# Hostname
+echo -e "hostname=\"$(cat ${TMPDIR}/selectHOSTNAME_LOCAL)\"" > /etc/conf.d/hostname
+cp /opt/kaconf/conf/hosts.template ${TMPDIR}/hosts
+sed -i s,"{HOSTNAME_TEMPLATE}","$(cat ${TMPDIR}/selectHOSTNAME_LOCAL)",g ${TMPDIR}/hosts ; cp ${TMPDIR}/hosts /etc/hosts
+hostname $(cat ${TMPDIR}/selectHOSTNAME_LOCAL)
+
+
+#####################################################
+# LXDM (acesso TS)
+cp /opt/kaconf/conf/lxdm.conf.template ${TMPDIR}/lxdm.conf
+
+sed -i s,"{NOVO_IP_TS}","$(cat ${TMPDIR}/selectNOVO_IP_TS)",g ${TMPDIR}/lxdm.conf
+sed -i s,"{NOVO_USUARIO_TS}","$(cat ${TMPDIR}/selectNOVO_USUARIO_TS)",g ${TMPDIR}/lxdm.conf
+sed -i s,"{NOVA_SENHA_TS}","$(cat ${TMPDIR}/selectNOVA_SENHA_TS)",g ${TMPDIR}/lxdm.conf
+
+cp ${TMPDIR}/lxdm.conf /etc/lxdm/lxdm.conf
+rc-update add xdm
+/etc/init.d/xdm restart
+
+#############################################################################################################################################################################################
+
+/etc/init.d/netif.${DEVICE} restart
+
+dialog --backtitle " KAconf " --title " KAconf " --msgbox "\n\nConfiguração do dispositivo realizada com sucesso.\n" 9 50
+clear

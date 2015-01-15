@@ -1,0 +1,4 @@
+template="interface"
+ipaddrs="192.168.254.162/24"
+gateway="192.168.254.254"
+nameservers="8.8.8.8"

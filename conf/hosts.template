@@ -1,0 +1,3 @@
+127.0.0.2	{HOSTNAME_TEMPLATE} 
+127.0.0.1	{HOSTNAME_TEMPLATE} localhost localhost.localdomain
+::1		{HOSTNAME_TEMPLATE} localhost localhost.localdomain
